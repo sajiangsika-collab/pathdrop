@@ -13,6 +13,10 @@ jobs:
   build:
     name: ${{ matrix.label }}
     runs-on: ${{ matrix.os }}
+    env:
+      # Windows runner 默认 cp1252，不加这个中文日志会抛 UnicodeEncodeError
+      PYTHONUTF8: "1"
+      PYTHONIOENCODING: "utf-8"
     strategy:
       fail-fast: false
       matrix:

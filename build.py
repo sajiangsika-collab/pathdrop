@@ -16,6 +16,16 @@ import shutil
 import zipfile
 import subprocess
 
+# Windows CI 的控制台默认是 cp1252，直接 print 中文会抛 UnicodeEncodeError。
+# 这里统一切到 UTF-8，顺便让子进程也用 UTF-8。
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+os.environ.setdefault("PYTHONUTF8", "1")
+os.environ.setdefault("PYTHONIOENCODING", "utf-8")
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 NAME = "PathDrop"
 VER = "1.4"
