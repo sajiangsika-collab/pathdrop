@@ -33,6 +33,49 @@ def ensure_assets():
     subprocess.check_call([sys.executable, os.path.join(HERE, "make_icon.py")], cwd=HERE)
 
 
+def win_version_file():
+    """Windows exe 的"属性 → 详细信息"里显示版本，而不是空白"""
+    txt = f"""VSVersionInfo(
+  ffi=FixedFileInfo(filevers=({VER.replace('.', ',')},0,0), prodvers=({VER.replace('.', ',')},0,0),
+                    mask=0x3f, flags=0x0, OS=0x40004, fileType=0x1, subtype=0x0, date=(0, 0)),
+  kids=[StringFileInfo([StringTable('080404b0', [
+        StringStruct('CompanyName', 'sajiangska-collab'),
+        StringStruct('FileDescription', '路径抓取器 PathDrop — 拖入即显示完整路径'),
+        StringStruct('FileVersion', '{VER}'),
+        StringStruct('InternalName', 'PathDrop'),
+        StringStruct('OriginalFilename', 'PathDrop.exe'),
+        StringStruct('ProductName', 'PathDrop'),
+        StringStruct('ProductVersion', '{VER}')])]),
+      VarFileInfo([VarStruct('Translation', [2052, 1200])])]
+)"""
+    out = os.path.join(HERE, "build", "version_info.txt")
+    os.makedirs(os.path.dirname(out), exist_ok=True)
+    with open(out, "w", encoding="utf-8") as f:
+        f.write(txt)
+    return out
+
+
+def mac_icns():
+    """macOS 的 .app 需要 .icns，用 iconutil 从 app.png 转一份"""
+    if not IS_MAC:
+        return None
+    try:
+        from PIL import Image
+        iconset = os.path.join(HERE, "build", "AppIcon.iconset")
+        os.makedirs(iconset, exist_ok=True)
+        im = Image.open(os.path.join(HERE, "app.png")).convert("RGBA")
+        for size, name in [(16, "16x16"), (32, "16x16@2x"), (32, "32x32"), (64, "32x32@2x"),
+                           (128, "128x128"), (256, "128x128@2x"), (256, "256x256"),
+                           (512, "256x256@2x"), (512, "512x512"), (1024, "512x512@2x")]:
+            im.resize((size, size), Image.LANCZOS).save(os.path.join(iconset, f"icon_{name}.png"))
+        out = os.path.join(HERE, "app.icns")
+        subprocess.check_call(["iconutil", "-c", "icns", iconset, "-o", out])
+        return out
+    except Exception as e:
+        print(f"[build] 生成 .icns 失败，用默认图标：{e}")
+        return None
+
+
 def build():
     ensure_assets()
     sep = ";" if IS_WIN else ":"
@@ -47,7 +90,11 @@ def build():
         "--exclude-module", "PIL",
     ]
     if IS_WIN:
-        args += ["--icon", "app.ico"]
+        args += ["--icon", "app.ico", "--version-file", win_version_file()]
+    elif IS_MAC:
+        icns = mac_icns()
+        if icns:
+            args += ["--icon", icns]
     args.append("pathdrop.py")
     print("[build] " + " ".join(args[2:]))
     subprocess.check_call(args, cwd=HERE)
