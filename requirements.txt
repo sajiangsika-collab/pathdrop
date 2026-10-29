@@ -1,0 +1,6 @@
+# 运行依赖（Windows / macOS / Linux 通用）
+# tkinter 是 Python 自带的，Linux 上需要额外装系统包：
+#   Ubuntu/Debian: sudo apt install python3-tk
+#   Fedora:        sudo dnf install python3-tkinter
+#   Arch:          sudo pacman -S tk
+tkinterdnd2>=0.7.0
