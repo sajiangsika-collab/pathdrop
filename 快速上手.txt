@@ -1,5 +1,5 @@
 Name:    PathDrop
-Version: 1.4
+Version: 1.4.1
 Summary: Drag files, text containing a path, or web links into the window —
          see the full path instantly and copy it in one click.
 
@@ -43,6 +43,10 @@ Common actions / 常用操作
 · Click a column header to sort; the right-click menu has "Copy SHA256",
   "Reveal in Explorer" and more
   点列头可排序；右键有「复制 SHA256」「打开所在位置」等
+
+· Switch the interface language with the dropdown at the top right
+  (English / 中文). Your choice is remembered next time.
+  右上角下拉框可切换界面语言（English / 中文），选择会被记住
 
 ================================================================
 Notes / 说明

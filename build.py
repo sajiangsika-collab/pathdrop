@@ -28,7 +28,7 @@ os.environ.setdefault("PYTHONIOENCODING", "utf-8")
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 NAME = "PathDrop"
-VER = "1.4"
+VER = "1.4.1"
 IS_WIN = os.name == "nt"
 IS_MAC = sys.platform == "darwin"
 

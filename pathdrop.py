@@ -1,11 +1,19 @@
 # -*- coding: utf-8 -*-
 """
-路径抓取器 PathDrop  v1.1
-把电脑上的任何东西（文件 / 视频 / 图片 / 文件夹 / 程序 ...）拖进窗口，
-立刻显示它的完整路径，支持一键复制。
+PathDrop / 路径抓取器  v1.4.1
 
-v1.1 新增：列头排序 · 详情面板（图片分辨率 / 视频时长）· SHA256 校验值 ·
-           复制后自动收起 · Esc 收起 · 再次打开程序自动唤回已运行的窗口
+把电脑上的任何东西（文件 / 视频 / 图片 / 文件夹 / 程序 / 文字里的路径 / 网页链接）
+拖进窗口，立刻显示它的完整路径，支持一键复制。
+
+界面支持中英双语，右上角下拉框即时切换（英文为默认的对外语言，中文系统首次启动
+自动使用中文；选择会记进设置文件）。
+
+v1.4.1 新增：界面双语切换（English / 中文）
+v1.4   新增：跨平台（macOS / Linux 可运行、可打包），字体与图标按系统自动选择
+v1.3   新增：拖入网页链接，作为「网址」条目并查找本地同名文件
+v1.2   新增：拖入文字，识别句子里的路径与 file:///、环境变量等写法
+v1.1   新增：列头排序 · 详情面板（图片分辨率 / 视频时长）· SHA256 ·
+              复制后自动收起 · Esc 收起 · 再次打开程序自动唤回已运行的窗口
 
 运行：python pathdrop.py
 """
@@ -32,12 +40,178 @@ from tkinter import ttk, filedialog, messagebox
 
 from tkinterdnd2 import TkinterDnD, DND_FILES, DND_TEXT
 
-APP_NAME = "路径抓取器 PathDrop"
-APP_VER = "1.4"
+APP_NAME = "PathDrop"
+APP_VER = "1.4.1"
 PORT = 51943
 
 IS_WIN = os.name == "nt"
 IS_MAC = sys.platform == "darwin"
+
+# ---------------- 界面语言 ----------------
+# 每项写作 (key, English, 中文)。英文在前是本项目的约定。
+_STRINGS = [
+    ("app.title",              "PathDrop", "路径抓取器 PathDrop"),
+
+    ("head.title",             "Drop it in — the path shows up", "把文件拖进来，路径自动出现"),
+    ("head.sub",               "Files, folders, videos, images — or a text snippet, or a web link. All work.",
+                               "文件 / 视频 / 图片 / 文件夹直接拖进来；文字里的路径、网页链接也能拖进来识别"),
+
+    ("drop.main",              "Drop files, folders, text paths or links here",
+                               "拖文件 / 文件夹 / 文字路径 / 网页链接，都行"),
+    ("drop.hover",             "Release to capture the path", "松手即可获取路径"),
+    ("drop.browse",            "or click here to browse", "或点这里选择文件"),
+    ("drop.empty",             "Nothing here yet", "列表还是空的"),
+    ("lang.label",             "Language:", "语言："),
+
+    ("col.idx",                "#", "#"),
+    ("col.name",               "Name", "名称"),
+    ("col.type",               "Type", "类型"),
+    ("col.size",               "Size", "大小"),
+    ("col.mtime",              "Modified", "修改时间"),
+    ("col.path",               "Full path", "完整路径"),
+    ("col.gone",               "(missing)", "（已不存在）"),
+
+    ("lbl.fullpath",           "Full path", "完整路径"),
+    ("lbl.sha",                "SHA256", "算 SHA256"),
+
+    ("btn.copy",               "Copy selected", "复制选中路径"),
+    ("btn.copy_all",           "Copy all", "复制全部"),
+    ("btn.copy_csv",           "Copy as CSV", "复制为 CSV"),
+    ("btn.reveal",             "Reveal", "打开所在位置"),
+    ("btn.export",             "Export", "导出列表"),
+    ("btn.clear",              "Clear", "清空"),
+
+    ("opt.topmost",            "Always on top", "窗口置顶"),
+    ("opt.recursive",          "Expand folders", "展开文件夹内容"),
+    ("opt.collapse",           "Hide after copy", "复制后收起"),
+
+    ("menu.copy",              "Copy path", "复制路径"),
+    ("menu.copy_name",         "Copy filename", "复制文件名"),
+    ("menu.sha",               "Copy SHA256", "复制 SHA256"),
+    ("menu.browser",           "Open in browser", "在浏览器打开"),
+    ("menu.reveal",            "Reveal in file manager", "打开所在位置"),
+    ("menu.remove",            "Remove from list", "从列表移除"),
+
+    ("status.wait",            "Waiting for a drop…", "等待拖入…"),
+    ("status.added",           "{n} added", "新增 {n} 项"),
+    ("status.skipped",         "{n} duplicates skipped", "跳过重复 {n} 项"),
+    ("status.elapsed",         "{msg} · {ms} ms", "{msg} · 耗时 {ms} ms"),
+    ("status.stats",           "{n} items · {size} total · {detail}",
+                               "共 {n} 项 · 合计 {size} · {detail}"),
+    ("status.copied",          "Copied to clipboard", "已复制到剪贴板"),
+    ("status.copied_n",        "Copied {n} paths to clipboard", "已复制 {n} 条路径到剪贴板"),
+    ("status.copied_all",      "Copied all {n} paths to clipboard", "已复制全部 {n} 条路径到剪贴板"),
+    ("status.copied_names",    "Filenames copied to clipboard", "已复制文件名到剪贴板"),
+    ("status.copied_csv",      "CSV copied to clipboard", "已复制 CSV 到剪贴板"),
+    ("status.sha_copied",      "SHA256 copied to clipboard", "SHA256 已复制到剪贴板"),
+    ("status.exported",        "Exported to {p}", "已导出到 {p}"),
+    ("status.need_select",     "Select a row first, or use Copy all", "先选中一行，或直接点「复制全部」"),
+    ("status.need_row",        "Select a row first", "先选中一行"),
+    ("status.gone",            "This path no longer exists", "该路径已不存在"),
+    ("status.open_failed",     "Cannot open: {e}", "打不开：{e}"),
+    ("status.failed",          "Failed: {e}", "打开失败：{e}"),
+    ("status.hash_failed",     "Hashing failed: {e}", "计算哈希失败：{e}"),
+
+    ("info.pick_row",          "Select a row to see details", "选中一行查看详情"),
+    ("info.selected_n",        "{n} selected", "已选中 {n} 项"),
+    ("info.selected_n_size",   "{n} selected · {size} total", "已选中 {n} 项 · 合计 {size}"),
+
+    ("url.pixels",             "{w} × {h} px", "{w} × {h} 像素"),
+    ("url.duration",           "duration {t}", "时长 {t}"),
+    ("url.needs_ffprobe",      "duration needs ffprobe", "时长需装 ffprobe 才能读"),
+    ("url.link",               "Link", "网址"),
+    ("url.filename",           "file {name}", "文件名 {name}"),
+    ("url.local_match",        "local file {p} ({t})", "本地同名文件 {p}（{t}）"),
+    ("url.more_cands",         "{n} more candidates", "另有 {n} 个候选"),
+    ("url.no_local",           "no matching file in Downloads / Desktop",
+                               "下载 / 桌面里没找到同名文件"),
+    ("url.not_url",            "The selected row is not a link", "选中的不是网址"),
+    ("url.no_local_reveal",    "It is a link and no local file matches — double-click it to open in the browser",
+                               "这是网址，本机下载 / 桌面里也没找到同名文件，双击可直接用浏览器打开"),
+    ("url.local_found",        "Local file: {p}", "本地同名文件：{p}"),
+    ("url.sha_unavailable",    "A link has no SHA256 — download it to disk first",
+                               "网址没有 SHA256；先下载到本地再算"),
+
+    ("sha.need_file",          "Select a file to hash", "先选中要算哈希的文件"),
+    ("sha.no_folder",          "Folders are not hashed", "文件夹不计算哈希"),
+    ("sha.calculating",        "Computing SHA256 of {name} …", "正在计算 {name} 的 SHA256 …"),
+
+    ("text.guess_only",        "{n} path-like strings found, but they do not exist on this machine — listed as-is",
+                               "这段文字里有 {n} 个像路径的内容，但本机找不到，已按原样列出（表中标为「已不存在」）"),
+    ("text.nothing",           "No path or link found in the dropped text — drop the file itself, or press Ctrl+V",
+                               "拖进来的文字里没认出路径或网址；可以直接拖文件本身，或用 Ctrl+V 粘贴"),
+    ("text.clipboard_empty",   "No recognizable path or link in the clipboard",
+                               "剪贴板里没有能识别的路径或网址"),
+
+    ("dlg.pick_files",         "Select files (multiple allowed)", "选择文件（可多选）"),
+    ("dlg.export",             "Export list", "导出列表"),
+    ("dlg.export_default",     "paths_{ts}", "路径列表_{ts}"),
+    ("ft.csv",                 "CSV file", "CSV 表格"),
+    ("ft.txt",                 "Text file", "文本文件"),
+    ("dlg.export_failed",      "Export failed", "导出失败"),
+    ("csv.header",             "Name,Type,Size (bytes),Full path", "名称,类型,大小(字节),完整路径"),
+    ("csv.header_full",        "No.,Name,Type,Size (bytes),Modified,SHA256,Full path",
+                               "序号,名称,类型,大小(字节),修改时间,SHA256,完整路径"),
+
+    ("type.video",             "Video", "视频"),
+    ("type.audio",             "Audio", "音频"),
+    ("type.image",             "Image", "图片"),
+    ("type.doc",               "Document", "文档"),
+    ("type.archive",           "Archive", "压缩包"),
+    ("type.app",               "Program", "程序"),
+    ("type.code",              "Code", "代码"),
+    ("type.other",             "Other", "其他"),
+    ("type.dir",               "Folder", "文件夹"),
+    ("type.url",               "Link", "网址"),
+]
+
+TR = {"en": {k: en for k, en, _zh in _STRINGS},
+      "zh": {k: zh for k, _en, zh in _STRINGS}}
+
+# 下拉框里显示的名字（两种语言下都保持各自的原生写法）
+LANG_LABEL = {"en": "English", "zh": "中文"}
+
+
+def detect_lang():
+    """优先跟随系统界面语言：中文系统用中文，其它用英文"""
+    if IS_WIN:
+        try:
+            import ctypes
+            lid = ctypes.windll.kernel32.GetUserDefaultUILanguage()
+            return "zh" if (lid & 0x3FF) == 0x04 else "en"
+        except Exception:
+            pass
+    for var in ("LC_ALL", "LC_MESSAGES", "LANG"):
+        v = os.environ.get(var)
+        if v:
+            return "zh" if v.lower().startswith("zh") else "en"
+    try:
+        import locale
+        loc = (locale.getlocale()[0] or "")
+        if loc:
+            return "zh" if loc.lower().startswith("zh") else "en"
+    except Exception:
+        pass
+    return "en"
+
+
+LANG = detect_lang()
+
+
+def T(key, **kw):
+    """取当前语言的文案；缺键时退回英文，再退回 key 本身"""
+    s = TR.get(LANG, TR["en"]).get(key) or TR["en"].get(key) or key
+    if kw:
+        try:
+            return s.format(**kw)
+        except (KeyError, IndexError):
+            return s
+    return s
+
+
+def type_label(key):
+    return T("type." + key)
+
 
 # ---------------- 配色（浅色主题） ----------------
 C_BG = "#F5F6F8"
@@ -58,26 +232,26 @@ FONT_TITLE = (FONT_FAMILY, 15, "bold")
 FONT_MONO = (FONT_MONO_FAMILY, 10)
 
 TYPE_RULES = [
-    ("视频", "#B45309", {".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv", ".webm", ".m4v",
-                     ".mpg", ".mpeg", ".ts", ".m2ts", ".rmvb", ".rm", ".3gp", ".vob", ".asf"}),
-    ("音频", "#7C3AED", {".mp3", ".wav", ".flac", ".aac", ".ogg", ".m4a", ".wma", ".aiff", ".ape", ".opus"}),
-    ("图片", "#0E7490", {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".svg", ".tif", ".tiff",
-                     ".heic", ".ico", ".raw", ".cr2", ".nef", ".arw", ".psd", ".ai"}),
-    ("文档", "#1D4ED8", {".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".md",
-                     ".csv", ".rtf", ".epub", ".mobi", ".pages", ".numbers", ".key", ".odt"}),
-    ("压缩包", "#6B7280", {".zip", ".rar", ".7z", ".tar", ".gz", ".bz2", ".xz", ".iso", ".cab"}),
-    ("程序", "#B91C1C", {".exe", ".msi", ".bat", ".cmd", ".com", ".dll", ".lnk", ".apk", ".appx"}),
-    ("代码", "#0F766E", {".py", ".js", ".ts", ".html", ".css", ".json", ".xml", ".yml", ".yaml",
-                     ".java", ".c", ".cpp", ".h", ".go", ".rs", ".php", ".sh", ".sql", ".ipynb"}),
+    ("video", "#B45309", {".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv", ".webm", ".m4v",
+                          ".mpg", ".mpeg", ".ts", ".m2ts", ".rmvb", ".rm", ".3gp", ".vob", ".asf"}),
+    ("audio", "#7C3AED", {".mp3", ".wav", ".flac", ".aac", ".ogg", ".m4a", ".wma", ".aiff", ".ape", ".opus"}),
+    ("image", "#0E7490", {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".svg", ".tif", ".tiff",
+                          ".heic", ".ico", ".raw", ".cr2", ".nef", ".arw", ".psd", ".ai"}),
+    ("doc",   "#1D4ED8", {".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".md",
+                          ".csv", ".rtf", ".epub", ".mobi", ".pages", ".numbers", ".key", ".odt"}),
+    ("archive", "#6B7280", {".zip", ".rar", ".7z", ".tar", ".gz", ".bz2", ".xz", ".iso", ".cab"}),
+    ("app",   "#B91C1C", {".exe", ".msi", ".bat", ".cmd", ".com", ".dll", ".lnk", ".apk", ".appx"}),
+    ("code",  "#0F766E", {".py", ".js", ".ts", ".html", ".css", ".json", ".xml", ".yml", ".yaml",
+                          ".java", ".c", ".cpp", ".h", ".go", ".rs", ".php", ".sh", ".sql", ".ipynb"}),
 ]
 EXT2TYPE = {}
 for _n, _c, _es in TYPE_RULES:
     for _e in _es:
         EXT2TYPE[_e] = (_n, _c)
 
-TYPE_OTHER = ("其他", "#4B5563")
-TYPE_DIR = ("文件夹", "#15803D")
-TYPE_URL = ("网址", "#1A73E8")
+TYPE_OTHER = ("other", "#4B5563")
+TYPE_DIR = ("dir", "#15803D")
+TYPE_URL = ("url", "#1A73E8")
 
 IMG_EXT = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"}
 AV_EXT = {".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv", ".webm", ".m4v", ".mpg",
@@ -440,15 +614,20 @@ def media_duration(path):
 
 class PathDrop(TkinterDnD.Tk):
     def __init__(self):
+        global LANG
         super().__init__()
         self.items = []
         self.index_of = {}
         self.settings = self.load_settings()
+        saved = self.settings.get("lang")
+        LANG = saved if saved in ("en", "zh") else detect_lang()
         self.sort_col, self.sort_rev = None, False
         self._hash_cache = {}
         self._ui_q = queue.Queue()
+        self._regs = []          # (widget, option, key)：切换语言时统一重设
+        self._hovering = False
 
-        self.title(f"{APP_NAME}  v{APP_VER}")
+        self.title(f"{T('app.title')}  v{APP_VER}")
         self.configure(bg=C_BG)
         self.geometry(self.settings.get("geometry", "1120x760"))
         self.minsize(880, 560)
@@ -507,7 +686,8 @@ class PathDrop(TkinterDnD.Tk):
             data = {"geometry": self.geometry(),
                     "topmost": bool(self.topmost_var.get()),
                     "recursive": bool(self.recursive_var.get()),
-                    "collapse_after_copy": bool(self.collapse_var.get())}
+                    "collapse_after_copy": bool(self.collapse_var.get()),
+                    "lang": LANG}
             with open(SETTING_FILE, "w", encoding="utf-8") as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
         except Exception:
@@ -547,13 +727,69 @@ class PathDrop(TkinterDnD.Tk):
                          highlightbackground=C_BORDER, highlightcolor=C_BORDER)
 
     # ---------------- 界面 ----------------
+    def _reg(self, widget, option, key, **extra):
+        """登记一个随语言切换需要重设的控件"""
+        self._regs.append((widget, option, key))
+        try:
+            widget.configure(**{option: T(key)}, **extra)
+        except Exception:
+            pass
+        return widget
+
+    def _rebuild_menu(self):
+        self.menu.delete(0, "end")
+        for key, cmd in self._menu_spec:
+            if key == "-":
+                self.menu.add_separator()
+            else:
+                self.menu.add_command(label=T(key), command=cmd)
+
+    def apply_language(self):
+        """按当前 LANG 刷新所有静态文案"""
+        self.title(f"{T('app.title')}  v{APP_VER}")
+        for w, opt, key in self._regs:
+            try:
+                w.configure(**{opt: T(key)})
+            except Exception:
+                pass
+        self.dz_text.configure(text=T("drop.hover") if self._hovering else T("drop.main"))
+        self._rebuild_menu()
+        self.refresh_tree()
+        if self.tree.selection():
+            self.on_select()
+        else:
+            self.preview_var.set("")
+            self.info_var.set("—" if not self.items else T("info.pick_row"))
+
+    def on_lang_pick(self, event=None):
+        global LANG
+        want = "en" if self.lang_var.get().lower().startswith("en") else "zh"
+        if want != LANG:
+            LANG = want
+            self.apply_language()
+            self.save_settings()
+
     def _build_ui(self):
         head = tk.Frame(self, bg=C_BG)
         head.pack(fill="x", padx=18, pady=(12, 4))
-        tk.Label(head, text="把文件拖进来，路径自动出现", bg=C_BG, fg=C_TEXT,
-                 font=FONT_TITLE).pack(anchor="w")
-        tk.Label(head, text="文件 / 视频 / 图片 / 文件夹直接拖进来；文字里的路径、网页链接也能拖进来识别",
-                 bg=C_BG, fg=C_MUTED, font=FONT_UI_S).pack(anchor="w", pady=(2, 0))
+        left = tk.Frame(head, bg=C_BG)
+        left.pack(side="left", anchor="n")
+        self._reg(tk.Label(left, bg=C_BG, fg=C_TEXT, font=FONT_TITLE),
+                  "text", "head.title").pack(anchor="w")
+        self._reg(tk.Label(left, bg=C_BG, fg=C_MUTED, font=FONT_UI_S),
+                  "text", "head.sub").pack(anchor="w", pady=(2, 0))
+
+        # 语言切换（右上角）
+        langbox = tk.Frame(head, bg=C_BG)
+        langbox.pack(side="right", anchor="ne")
+        self._reg(tk.Label(langbox, bg=C_BG, fg=C_MUTED, font=FONT_UI_S),
+                  "text", "lang.label").pack(side="left", padx=(0, 4))
+        self.lang_var = tk.StringVar(value=LANG_LABEL[LANG])
+        self.lang_box = ttk.Combobox(langbox, textvariable=self.lang_var, width=8,
+                                     values=(LANG_LABEL["en"], LANG_LABEL["zh"]),
+                                     state="readonly", font=FONT_UI_S)
+        self.lang_box.pack(side="left")
+        self.lang_box.bind("<<ComboboxSelected>>", self.on_lang_pick)
 
         # 拖拽区
         self.dropzone = tk.Frame(self, bg=C_PANEL, height=94,
@@ -563,12 +799,12 @@ class PathDrop(TkinterDnD.Tk):
         self.dz_icon = tk.Label(self.dropzone, text="↓", bg=C_PANEL, fg=C_ACCENT,
                                 font=(FONT_FAMILY, 20))
         self.dz_icon.pack(pady=(8, 0))
-        self.dz_text = tk.Label(self.dropzone, text="拖文件 / 文件夹 / 文字路径 / 网页链接，都行",
-                                bg=C_PANEL, fg=C_TEXT, font=(FONT_FAMILY, 11))
+        self.dz_text = self._reg(tk.Label(self.dropzone, bg=C_PANEL, fg=C_TEXT,
+                                          font=(FONT_FAMILY, 11)), "text", "drop.main")
         self.dz_text.pack()
-        self.dz_hint = tk.Label(self.dropzone, text="或点这里选择文件",
-                                bg=C_PANEL, fg=C_ACCENT, font=(FONT_FAMILY, 9, "underline"),
-                                cursor="hand2")
+        self.dz_hint = self._reg(tk.Label(self.dropzone, bg=C_PANEL, fg=C_ACCENT,
+                                          font=(FONT_FAMILY, 9, "underline"),
+                                          cursor="hand2"), "text", "drop.browse")
         self.dz_hint.pack(pady=(2, 4))
         for w in (self.dropzone, self.dz_icon, self.dz_text, self.dz_hint):
             w.bind("<Button-1>", lambda e: self.pick_files())
@@ -578,11 +814,12 @@ class PathDrop(TkinterDnD.Tk):
         table_wrap.pack(fill="both", expand=True, padx=18)
         cols = ("idx", "name", "type", "size", "mtime", "path")
         self.tree = ttk.Treeview(table_wrap, columns=cols, show="headings", selectmode="extended")
-        self.heads = {"idx": ("#", 42), "name": ("名称", 200), "type": ("类型", 64),
-                      "size": ("大小", 84), "mtime": ("修改时间", 126), "path": ("完整路径", 460)}
+        self.heads = {"idx": ("col.idx", 42), "name": ("col.name", 200),
+                      "type": ("col.type", 76), "size": ("col.size", 92),
+                      "mtime": ("col.mtime", 132), "path": ("col.path", 460)}
         for c in cols:
-            text, width = self.heads[c]
-            self.tree.heading(c, text=text, command=lambda cc=c: self.sort_by(cc))
+            key, width = self.heads[c]
+            self.tree.heading(c, text=T(key), command=lambda cc=c: self.sort_by(cc))
             anchor = "center" if c in ("idx", "type", "mtime") else ("e" if c == "size" else "w")
             self.tree.column(c, width=width, minwidth=40, anchor=anchor, stretch=(c == "path"))
         vs = ttk.Scrollbar(table_wrap, orient="vertical", command=self.tree.yview)
@@ -596,18 +833,20 @@ class PathDrop(TkinterDnD.Tk):
         self.tree.bind("<Double-1>", self.on_double)
         self.tree.bind("<Button-3>", self.on_right_click)
         self.tree.bind("<<TreeviewSelect>>", self.on_select)
-        self.empty_tip = tk.Label(self.tree, text="列表还是空的", bg=C_PANEL, fg="#B9BEC7",
-                                  font=(FONT_FAMILY, 11))
+        self.empty_tip = tk.Label(self.tree, bg=C_PANEL, fg="#B9BEC7", font=(FONT_FAMILY, 11))
+        self._reg(self.empty_tip, "text", "drop.empty")
 
         # 详情面板
         det = tk.Frame(self, bg=C_BG)
         det.pack(fill="x", padx=18, pady=(8, 0))
         top = tk.Frame(det, bg=C_BG)
         top.pack(fill="x")
-        tk.Label(top, text="完整路径", bg=C_BG, fg=C_MUTED, font=FONT_UI_S).pack(side="left")
-        tk.Button(top, text="算 SHA256", command=self.calc_sha, font=(FONT_FAMILY, 8),
-                  bg=C_BG, fg=C_ACCENT, activebackground=C_BG, activeforeground=C_ACCENT,
-                  relief="flat", bd=0, cursor="hand2").pack(side="right")
+        self._reg(tk.Label(top, bg=C_BG, fg=C_MUTED, font=FONT_UI_S),
+                  "text", "lbl.fullpath").pack(side="left")
+        self._reg(tk.Button(top, command=self.calc_sha, font=(FONT_FAMILY, 8),
+                            bg=C_BG, fg=C_ACCENT, activebackground=C_BG, activeforeground=C_ACCENT,
+                            relief="flat", bd=0, cursor="hand2"),
+                  "text", "lbl.sha").pack(side="right")
         self.preview_var = tk.StringVar(value="")
         self.preview = tk.Entry(det, textvariable=self.preview_var, font=FONT_MONO, bg=C_PANEL,
                                 fg=C_TEXT, relief="flat", bd=0, highlightthickness=1,
@@ -621,33 +860,43 @@ class PathDrop(TkinterDnD.Tk):
         # 工具栏
         bar = tk.Frame(self, bg=C_BG)
         bar.pack(fill="x", padx=18, pady=(8, 2))
-        self._btn(bar, "复制选中路径", self.copy_selected, True).pack(side="left")
-        for t, c in (("复制全部", self.copy_all), ("复制为 CSV", self.copy_csv),
-                     ("打开所在位置", self.open_location), ("导出列表", self.export_list),
-                     ("清空", self.clear_all)):
-            self._btn(bar, t, c).pack(side="left", padx=(8, 0))
+        for key, cmd, primary in (("btn.copy", self.copy_selected, True),
+                                  ("btn.copy_all", self.copy_all, False),
+                                  ("btn.copy_csv", self.copy_csv, False),
+                                  ("btn.reveal", self.open_location, False),
+                                  ("btn.export", self.export_list, False),
+                                  ("btn.clear", self.clear_all, False)):
+            btn = self._reg(self._btn(bar, "", cmd, primary), "text", key)
+            btn.pack(side="left", padx=(0 if primary else 8, 0))
 
         opts = tk.Frame(bar, bg=C_BG)
         opts.pack(side="right")
-        for text, var, cmd in (("窗口置顶", self.topmost_var, self.toggle_topmost),
-                               ("展开文件夹内容", self.recursive_var, self.save_settings),
-                               ("复制后收起", self.collapse_var, self.save_settings)):
-            tk.Checkbutton(opts, text=text, variable=var, bg=C_BG, fg=C_TEXT, activebackground=C_BG,
-                           activeforeground=C_TEXT, selectcolor=C_PANEL, font=FONT_UI_S, bd=0,
-                           highlightthickness=0, cursor="hand2", command=cmd).pack(side="left", padx=(10, 0))
+        for key, var, cmd in (("opt.topmost", self.topmost_var, self.toggle_topmost),
+                              ("opt.recursive", self.recursive_var, self.save_settings),
+                              ("opt.collapse", self.collapse_var, self.save_settings)):
+            cb = self._reg(tk.Checkbutton(opts, variable=var, bg=C_BG, fg=C_TEXT,
+                                          activebackground=C_BG, activeforeground=C_TEXT,
+                                          selectcolor=C_PANEL, font=FONT_UI_S, bd=0,
+                                          highlightthickness=0, cursor="hand2", command=cmd),
+                           "text", key)
+            cb.pack(side="left", padx=(10, 0))
 
-        self.status_var = tk.StringVar(value="等待拖入…")
+        self.status_var = tk.StringVar(value=T("status.wait"))
         tk.Label(self, textvariable=self.status_var, bg=C_BG, fg=C_MUTED, font=FONT_UI_S,
                  anchor="w").pack(fill="x", padx=18, pady=(2, 8))
 
+        self._menu_spec = [
+            ("menu.copy", self.copy_selected),
+            ("menu.copy_name", self.copy_names),
+            ("menu.sha", self.calc_sha),
+            ("menu.browser", self.open_url),
+            ("menu.reveal", self.open_location),
+            ("-", None),
+            ("menu.remove", self.remove_selected),
+        ]
         self.menu = tk.Menu(self, tearoff=0, font=FONT_UI_S)
-        self.menu.add_command(label="复制路径", command=self.copy_selected)
-        self.menu.add_command(label="复制文件名", command=self.copy_names)
-        self.menu.add_command(label="复制 SHA256", command=self.calc_sha)
-        self.menu.add_command(label="在浏览器打开", command=self.open_url)
-        self.menu.add_command(label="打开所在位置", command=self.open_location)
-        self.menu.add_separator()
-        self.menu.add_command(label="从列表移除", command=self.remove_selected)
+        self._rebuild_menu()
+        self._refresh_headings()
         self.update_empty_tip()
 
     def update_empty_tip(self):
@@ -675,16 +924,18 @@ class PathDrop(TkinterDnD.Tk):
         self.bind("<Escape>", lambda e: self.collapse())
 
     def on_drag_enter(self, event=None):
+        self._hovering = True
         self.dropzone.configure(highlightbackground=C_ACCENT, bg=C_ACCENT_SOFT)
         for w in (self.dz_icon, self.dz_text, self.dz_hint):
             w.configure(bg=C_ACCENT_SOFT)
-        self.dz_text.configure(text="松手即可获取路径")
+        self.dz_text.configure(text=T("drop.hover"))
 
     def on_drag_leave(self, event=None):
+        self._hovering = False
         self.dropzone.configure(highlightbackground="#C9D3E4", bg=C_PANEL)
         for w in (self.dz_icon, self.dz_text, self.dz_hint):
             w.configure(bg=C_PANEL)
-        self.dz_text.configure(text="拖文件 / 文件夹 / 文字路径 / 网页链接，都行")
+        self.dz_text.configure(text=T("drop.main"))
 
     def on_drop(self, event):
         self.on_drag_leave()
@@ -720,15 +971,14 @@ class PathDrop(TkinterDnD.Tk):
             return True
         if guess:
             self.add_paths(guess)
-            self.status_var.set(
-                f"这段文字里有 {len(guess)} 个像路径的内容，但本机找不到，已按原样列出（表中标为「已不存在」）")
+            self.status_var.set(T("text.guess_only", n=len(guess)))
             return True
         if not quiet:
-            self.status_var.set("拖进来的文字里没认出路径或网址；可以直接拖文件本身，或用 Ctrl+V 粘贴")
+            self.status_var.set(T("text.nothing"))
         return False
 
     def pick_files(self):
-        paths = filedialog.askopenfilenames(title="选择文件（可多选）")
+        paths = filedialog.askopenfilenames(title=T("dlg.pick_files"))
         if paths:
             self.add_paths(list(paths))
 
@@ -766,10 +1016,10 @@ class PathDrop(TkinterDnD.Tk):
             added += 1
 
         self.refresh_tree()
-        msg = f"新增 {added} 项"
+        msg = T("status.added", n=added)
         if skipped:
-            msg += f"，跳过重复 {skipped} 项"
-        self.status_var.set(f"{msg} · 耗时 {(time.time() - t0) * 1000:.0f} ms")
+            msg += " · " + T("status.skipped", n=skipped)
+        self.status_var.set(T("status.elapsed", msg=msg, ms=f"{(time.time() - t0) * 1000:.0f}"))
 
     def make_item(self, path):
         path = str(path)
@@ -808,7 +1058,7 @@ class PathDrop(TkinterDnD.Tk):
         if c is None:
             return list(self.items)
         keys = {"name": lambda it: it["name"].lower(),
-                "type": lambda it: it["type"],
+                "type": lambda it: type_label(it["type"]).lower(),
                 "size": lambda it: it["size"] or 0,
                 "mtime": lambda it: it["mtime"] or 0,
                 "path": lambda it: it["path"].lower()}
@@ -818,6 +1068,8 @@ class PathDrop(TkinterDnD.Tk):
 
     # ---------------- 渲染 ----------------
     def refresh_tree(self):
+        # 重建行会丢掉选择，先按 key 记下来，重建后补回去（切语言时就靠这个）
+        sel_keys = {it["key"] for it in self._selected_items()}
         self.tree.delete(*self.tree.get_children())
         rows = self._sorted_items()
         self.index_of.clear()
@@ -828,39 +1080,47 @@ class PathDrop(TkinterDnD.Tk):
             if it["kind"] == "url":
                 mt = "—"
             elif not it["exists"]:
-                mt = "（已不存在）"
+                mt = T("col.gone")
             size_txt = human_size(it["size"])
             if it["kind"] == "url":
                 size_txt = "—"
-            if it["type"] == "文件夹" and it["size"] is not None:
+            if it["type"] == "dir" and it["size"] is not None:
                 size_txt = "≥" + size_txt
             self.tree.insert("", "end", iid=f"r{i}",
-                             values=(i, it["name"], it["type"], size_txt, mt, it["path"]),
+                             values=(i, it["name"], type_label(it["type"]), size_txt, mt, it["path"]),
                              tags=(f"t{i}",))
             self.tree.tag_configure(f"t{i}", foreground=it["color"] if it["exists"] else "#B9BEC7")
+        if sel_keys:
+            keep = [f"r{i}" for i, it in enumerate(rows, 1) if it["key"] in sel_keys]
+            if keep:
+                self.tree.selection_set(keep)
         self._refresh_headings()
         self.update_empty_tip()
         self.update_stats()
+        if sel_keys:
+            self.on_select()
 
     def _refresh_headings(self):
-        for c, (text, _w) in self.heads.items():
+        for c, (key, _w) in self.heads.items():
             arrow = ""
             if c == self.sort_col and c != "idx":
                 arrow = " ▾" if self.sort_rev else " ▴"
-            self.tree.heading(c, text=text + arrow)
+            self.tree.heading(c, text=T(key) + arrow)
 
     def update_stats(self):
         if not self.items:
-            self.status_var.set("等待拖入…")
+            self.status_var.set(T("status.wait"))
             self.preview_var.set("")
             self.info_var.set("—")
             return
         total = sum((it["size"] or 0) for it in self.items)
         cnt = {}
         for it in self.items:
-            cnt[it["type"]] = cnt.get(it["type"], 0) + 1
+            label = type_label(it["type"])
+            cnt[label] = cnt.get(label, 0) + 1
         detail = " · ".join(f"{k} {v}" for k, v in sorted(cnt.items(), key=lambda x: -x[1]))
-        self.status_var.set(f"共 {len(self.items)} 项 · 合计 {human_size(total)} · {detail}")
+        self.status_var.set(T("status.stats", n=len(self.items),
+                              size=human_size(total), detail=detail))
 
     def selected_paths(self):
         out = []
@@ -888,9 +1148,9 @@ class PathDrop(TkinterDnD.Tk):
         paths = self.selected_paths()
         if not paths:
             self.preview_var.set("")
-            self.info_var.set("—" if not self.items else "选中一行查看详情")
+            self.info_var.set("—" if not self.items else T("info.pick_row"))
             return
-        self.preview_var.set(paths[0] if len(paths) == 1 else f"已选中 {len(paths)} 项")
+        self.preview_var.set(paths[0] if len(paths) == 1 else T("info.selected_n", n=len(paths)))
         if len(paths) > 1:
             total = 0
             for p in paths:
@@ -898,7 +1158,7 @@ class PathDrop(TkinterDnD.Tk):
                     total += os.path.getsize(p)
                 except OSError:
                     pass
-            self.info_var.set(f"已选中 {len(paths)} 项 · 合计 {human_size(total)}")
+            self.info_var.set(T("info.selected_n_size", n=len(paths), size=human_size(total)))
             return
         p = paths[0]
         bits = []
@@ -907,11 +1167,11 @@ class PathDrop(TkinterDnD.Tk):
         # 网址：显示域名、推断文件名，并去下载目录里找同名本地文件
         if it and it["kind"] == "url":
             parts = url_parts(p)
-            bits.append("网址")
+            bits.append(T("url.link"))
             if parts["host"]:
                 bits.append(parts["host"])
             if parts["name"]:
-                bits.append(f"文件名 {parts['name']}")
+                bits.append(T("url.filename", name=parts["name"]))
             cands = local_candidates(p)
             if cands:
                 cand = cands[0]
@@ -919,16 +1179,16 @@ class PathDrop(TkinterDnD.Tk):
                     t = datetime.datetime.fromtimestamp(os.path.getmtime(cand)).strftime("%m-%d %H:%M")
                 except OSError:
                     t = "—"
-                bits.append(f"本地同名文件 {cand}（{t}）")
+                bits.append(T("url.local_match", p=cand, t=t))
                 if len(cands) > 1:
-                    bits.append(f"另有 {len(cands) - 1} 个候选")
+                    bits.append(T("url.more_cands", n=len(cands) - 1))
             else:
-                bits.append("下载 / 桌面里没找到同名文件")
+                bits.append(T("url.no_local"))
             self.info_var.set(" · ".join(bits))
             return
 
         if it:
-            bits.append(it["type"])
+            bits.append(type_label(it["type"]))
             bits.append(human_size(it["size"]))
             if it["mtime"]:
                 bits.append(datetime.datetime.fromtimestamp(it["mtime"]).strftime("%Y-%m-%d %H:%M:%S"))
@@ -936,62 +1196,61 @@ class PathDrop(TkinterDnD.Tk):
         if ext in IMG_EXT:
             wh = image_size(p)
             if wh and wh[0] and wh[1]:
-                bits.append(f"{wh[0]} × {wh[1]} 像素")
+                bits.append(T("url.pixels", w=wh[0], h=wh[1]))
         elif ext in AV_EXT:
             dur = media_duration(p)
             if dur:
-                bits.append(f"时长 {human_time(dur)}")
+                bits.append(T("url.duration", t=human_time(dur)))
             else:
-                bits.append("时长需装 ffprobe 才能读")
+                bits.append(T("url.needs_ffprobe"))
         if it and it["key"] in self._hash_cache:
             bits.append("SHA256 " + self._hash_cache[it["key"]])
         self.info_var.set(" · ".join(bits) if bits else "—")
 
     # ---------------- 复制 / 导出 ----------------
-    def _copy(self, text, tip):
+    def _copy(self, text, status):
         self.clipboard_clear()
         self.clipboard_append(text)
-        self.status_var.set(f"{tip}（已复制到剪贴板）")
+        self.status_var.set(status)
         if self.collapse_var.get():
             self.after(300, self.collapse)
 
     def copy_selected(self):
         paths = self.selected_paths()
         if not paths:
-            self.status_var.set("先选中一行，或直接点「复制全部」")
+            self.status_var.set(T("status.need_select"))
             return
-        self._copy("\n".join(paths), f"已复制 {len(paths)} 条路径")
+        self._copy("\n".join(paths), T("status.copied_n", n=len(paths)))
 
     def copy_all(self):
         if not self.items:
             return
-        self._copy("\n".join(it["path"] for it in self.items), f"已复制全部 {len(self.items)} 条路径")
+        self._copy("\n".join(it["path"] for it in self.items),
+                   T("status.copied_all", n=len(self.items)))
 
     def copy_names(self):
-        names = []
-        for it in self._selected_items():
-            names.append(it["name"])
+        names = [it["name"] for it in self._selected_items()]
         if names:
-            self._copy("\n".join(names), "已复制文件名")
+            self._copy("\n".join(names), T("status.copied_names"))
 
     def copy_csv(self):
         paths = set(self.selected_paths()) or {it["path"] for it in self.items}
         if not paths:
             return
-        lines = ["名称,类型,大小(字节),完整路径"]
+        lines = [T("csv.header")]
         for it in self.items:
             if it["path"] in paths:
                 size = "" if it["kind"] == "url" else (it["size"] or 0)
-                lines.append(f'{it["name"]},{it["type"]},{size},"{it["path"]}"')
-        self._copy("\n".join(lines), "已复制 CSV")
+                lines.append(f'{it["name"]},{type_label(it["type"])},{size},"{it["path"]}"')
+        self._copy("\n".join(lines), T("status.copied_csv"))
 
     def export_list(self):
         if not self.items:
             return
-        default = f"路径列表_{datetime.datetime.now():%Y%m%d_%H%M}.csv"
-        fp = filedialog.asksaveasfilename(title="导出列表", defaultextension=".csv",
+        default = T("dlg.export_default", ts=f"{datetime.datetime.now():%Y%m%d_%H%M}") + ".csv"
+        fp = filedialog.asksaveasfilename(title=T("dlg.export"), defaultextension=".csv",
                                           initialfile=default,
-                                          filetypes=[("CSV 表格", "*.csv"), ("文本文件", "*.txt")])
+                                          filetypes=[(T("ft.csv"), "*.csv"), (T("ft.txt"), "*.txt")])
         if not fp:
             return
         try:
@@ -1002,35 +1261,35 @@ class PathDrop(TkinterDnD.Tk):
             else:
                 with open(fp, "w", encoding="utf-8-sig", newline="") as f:
                     w = csv.writer(f)
-                    w.writerow(["序号", "名称", "类型", "大小(字节)", "修改时间", "SHA256", "完整路径"])
+                    w.writerow(T("csv.header_full").split(","))
                     for i, it in enumerate(self.items, 1):
                         mt = (datetime.datetime.fromtimestamp(it["mtime"]).strftime("%Y-%m-%d %H:%M:%S")
                               if it["mtime"] else "")
-                        w.writerow([i, it["name"], it["type"],
+                        w.writerow([i, it["name"], type_label(it["type"]),
                                     "" if it["kind"] == "url" else (it["size"] or 0), mt,
                                     self._hash_cache.get(it["key"], ""), it["path"]])
-            self.status_var.set(f"已导出到 {fp}")
+            self.status_var.set(T("status.exported", p=fp))
         except Exception as e:
-            messagebox.showerror("导出失败", str(e))
+            messagebox.showerror(T("dlg.export_failed"), str(e))
 
     # ---------------- 动作 ----------------
     def calc_sha(self):
         items = self._selected_items()
         if not items:
-            self.status_var.set("先选中要算哈希的文件")
+            self.status_var.set(T("sha.need_file"))
             return
         it = items[0]
         if it["kind"] == "url":
-            self.status_var.set("网址没有 SHA256；先下载到本地再算")
+            self.status_var.set(T("url.sha_unavailable"))
             return
         p = it["path"]
         if not os.path.isfile(p):
-            self.status_var.set("文件夹不计算哈希")
+            self.status_var.set(T("sha.no_folder"))
             return
         if it["key"] in self._hash_cache:
-            self._copy(self._hash_cache[it["key"]], "SHA256")
+            self._copy(self._hash_cache[it["key"]], T("status.sha_copied"))
             return
-        self.status_var.set(f"正在计算 {os.path.basename(p)} 的 SHA256 …")
+        self.status_var.set(T("sha.calculating", name=os.path.basename(p)))
 
         def work():
             try:
@@ -1040,32 +1299,32 @@ class PathDrop(TkinterDnD.Tk):
                         h.update(chunk)
                 digest = h.hexdigest()
             except Exception as e:
-                digest = f"失败：{e}"
+                digest = T("status.hash_failed", e=e)
             self._ui_q.put(lambda: self._hash_done(it["key"], digest))
 
         threading.Thread(target=work, daemon=True).start()
 
     def _hash_done(self, key, digest):
         self._hash_cache[key] = digest
-        self._copy(digest, "SHA256")
+        self._copy(digest, T("status.sha_copied"))
         self.on_select()
 
     def open_location(self):
         items = self._selected_items()
         if not items:
-            self.status_var.set("先选中一行")
+            self.status_var.set(T("status.need_row"))
             return
         it = items[0]
         if it["kind"] == "url":
             cands = local_candidates(it["path"])
             if not cands:
-                self.status_var.set("这是网址，本机下载 / 桌面里也没找到同名文件，双击可直接用浏览器打开")
+                self.status_var.set(T("url.no_local_reveal"))
                 return
-            self.status_var.set(f"本地同名文件：{cands[0]}")
+            self.status_var.set(T("url.local_found", p=cands[0]))
             try:
                 reveal_path(cands[0])
             except Exception as e:
-                self.status_var.set(f"打开失败：{e}")
+                self.status_var.set(T("status.failed", e=e))
             return
         p = it["path"]
         try:
@@ -1074,21 +1333,21 @@ class PathDrop(TkinterDnD.Tk):
             elif os.path.exists(p):
                 reveal_path(p)
             else:
-                self.status_var.set("该路径已不存在")
+                self.status_var.set(T("status.gone"))
         except Exception as e:
-            self.status_var.set(f"打开失败：{e}")
+            self.status_var.set(T("status.failed", e=e))
 
     def open_url(self):
         items = self._selected_items()
         urls = [it["path"] for it in items if it["kind"] == "url"]
         if not urls:
-            self.status_var.set("选中的不是网址")
+            self.status_var.set(T("url.not_url"))
             return
         for u in urls[:5]:
             try:
                 webbrowser.open(u)
             except Exception as e:
-                self.status_var.set(f"打不开：{e}")
+                self.status_var.set(T("status.open_failed", e=e))
 
     def on_double(self, event):
         iid = self.tree.identify_row(event.y)
@@ -1099,15 +1358,15 @@ class PathDrop(TkinterDnD.Tk):
             try:
                 webbrowser.open(p)
             except Exception as e:
-                self.status_var.set(f"打不开：{e}")
+                self.status_var.set(T("status.open_failed", e=e))
             return
         if os.path.exists(p):
             try:
                 open_default(p)
             except Exception as e:
-                self.status_var.set(f"打不开：{e}")
+                self.status_var.set(T("status.open_failed", e=e))
         else:
-            self.status_var.set("该路径已不存在")
+            self.status_var.set(T("status.gone"))
 
     def on_right_click(self, event):
         iid = self.tree.identify_row(event.y)
@@ -1138,7 +1397,7 @@ class PathDrop(TkinterDnD.Tk):
         except Exception:
             return
         if not self.add_from_text(text, quiet=True):
-            self.status_var.set("剪贴板里没有能识别的路径或网址")
+            self.status_var.set(T("text.clipboard_empty"))
 
     # ---------------- 窗口 ----------------
     def collapse(self):

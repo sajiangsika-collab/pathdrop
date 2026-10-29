@@ -9,7 +9,7 @@
 [![python](https://img.shields.io/badge/python-3.10%2B-3776AB)](https://www.python.org/)
 [![build](https://github.com/sajiangsika-collab/pathdrop/actions/workflows/build.yml/badge.svg)](https://github.com/sajiangsika-collab/pathdrop/actions/workflows/build.yml)
 
-![Screenshot](docs/screenshot.png)
+![PathDrop](docs/screenshot-en.png)
 
 Copying a file path on Windows normally means holding Shift, right-clicking, and picking
 "Copy as path" — or fishing the string out of the address bar by hand. Long paths and
@@ -28,6 +28,7 @@ and **web links** (it will even find the matching local file in your Downloads f
 - **Handy actions**: sort by any column, copy selected / all / CSV, copy SHA256, reveal in file manager, export CSV / TXT
 - **Stays out of the way**: always-on-top toggle, auto-hide after copying (or press `Esc`), double-click the icon again to bring the same window back instead of opening a second one
 - **No installation**: a single executable, no registry writes, settings stored in your user config folder
+- **Bilingual UI**: switch between English and 中文 with the dropdown in the top-right corner; your choice is remembered, and the first launch follows your system language
 
 ## Download
 
@@ -35,9 +36,9 @@ Grab the package for your OS from [Releases](https://github.com/sajiangsika-coll
 
 | Platform | File | Notes |
 | --- | --- | --- |
-| Windows 10/11 (x64) | `PathDrop-1.4-windows-x64.zip` | Unzip and run `PathDrop.exe`, no installer |
-| macOS (Intel / Apple Silicon) | `PathDrop-1.4-macos.zip` | Unzip to get `PathDrop.app`; unsigned, so right-click → Open the first time |
-| Linux (x64) | `PathDrop-1.4-linux-x64.tar.gz` | `chmod +x PathDrop && ./PathDrop`; needs X11 |
+| Windows 10/11 (x64) | `PathDrop-1.4.1-windows-x64.zip` | Unzip and run `PathDrop.exe`, no installer |
+| macOS (Intel / Apple Silicon) | `PathDrop-1.4.1-macos.zip` | Unzip to get `PathDrop.app`; unsigned, so right-click → Open the first time |
+| Linux (x64) | `PathDrop-1.4.1-linux-x64.tar.gz` | `chmod +x PathDrop && ./PathDrop`; needs X11 |
 
 > All three packages are built natively on each OS by GitHub Actions — see [build.yml](.github/workflows/build.yml).
 > The binaries are not code-signed, so Windows SmartScreen / macOS Gatekeeper may warn about an
@@ -130,6 +131,7 @@ docs/           screenshots and icons
 
 ## Changelog
 
+- **1.4.1** Bilingual interface (English / 中文) with a top-right switcher; the selected row is kept when switching
 - **1.4** Cross-platform (macOS / Linux build and run); fonts and icons picked per OS
 - **1.3** Web links supported as *Link* entries, with local same-name file lookup
 - **1.2** Text drops supported: paths inside sentences, `file:///` URIs, environment variables
@@ -145,6 +147,8 @@ docs/           screenshots and icons
 # 简体中文
 
 [English](#pathdrop) | **简体中文**
+
+![中文界面](docs/screenshot-zh.png)
 
 **把文件、文件夹、文字里的路径、网页链接拖进窗口，立刻显示完整路径，一键复制。**
 
@@ -164,6 +168,7 @@ docs/           screenshots and icons
 - **顺手的小动作**：列头排序、复制选中 / 全部 / CSV、复制 SHA256、打开所在位置、导出 CSV / TXT
 - **不打扰**：窗口置顶、复制后自动收起（Esc 也可收起），再次双击图标唤回原窗口，不会开第二个
 - **免安装**：单个可执行文件，不写注册表，设置存在用户配置目录
+- **中英双语界面**：右上角下拉框可在 English / 中文 之间即时切换，选择会被记住，首次启动跟随系统语言
 
 ## 下载
 
@@ -171,9 +176,9 @@ docs/           screenshots and icons
 
 | 系统 | 文件 | 说明 |
 | --- | --- | --- |
-| Windows 10/11 (x64) | `PathDrop-1.4-windows-x64.zip` | 解压后双击 `PathDrop.exe`，免安装 |
-| macOS (Intel / Apple Silicon) | `PathDrop-1.4-macos.zip` | 解压得到 `PathDrop.app`；未签名，首次需右键 →「打开」 |
-| Linux (x64) | `PathDrop-1.4-linux-x64.tar.gz` | 解压后 `chmod +x PathDrop && ./PathDrop`，需要系统有 X11 |
+| Windows 10/11 (x64) | `PathDrop-1.4.1-windows-x64.zip` | 解压后双击 `PathDrop.exe`，免安装 |
+| macOS (Intel / Apple Silicon) | `PathDrop-1.4.1-macos.zip` | 解压得到 `PathDrop.app`；未签名，首次需右键 →「打开」 |
+| Linux (x64) | `PathDrop-1.4.1-linux-x64.tar.gz` | 解压后 `chmod +x PathDrop && ./PathDrop`，需要系统有 X11 |
 
 > 三个平台的包由 GitHub Actions 在各自系统上原生构建，见 [build.yml](.github/workflows/build.yml)。
 > 没有代码签名，Windows SmartScreen / macOS Gatekeeper 可能提示「未知开发者」，属于正常现象。
@@ -263,6 +268,7 @@ docs/           截图与图标
 
 ## 更新日志
 
+- **1.4.1** 界面支持中英双语切换（右上角下拉框），切换时保留选中行
 - **1.4** 跨平台适配（macOS / Linux 可运行、可打包）；字体与图标按系统自动选择
 - **1.3** 支持拖入网页链接，作为「网址」条目并查找本地同名文件
 - **1.2** 支持拖入文字，识别句子里的路径与 `file:///`、环境变量等写法
