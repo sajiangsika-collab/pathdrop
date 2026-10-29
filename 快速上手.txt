@@ -1,26 +1,64 @@
-名称: 路径抓取器 PathDrop
-版本: 1.4
-说明: 把文件、文字里的路径、网页链接拖进窗口，立刻显示完整路径，一键复制。
+Name:    PathDrop
+Version: 1.4
+Summary: Drag files, text containing a path, or web links into the window —
+         see the full path instantly and copy it in one click.
 
-────────────────────────────────
-怎么用
-────────────────────────────────
-1. 双击 PathDrop.exe 打开（免安装，不写注册表）
-2. 从资源管理器把文件/文件夹拖进窗口 —— 立刻列出完整路径
-3. 也可以从聊天窗口、记事本里拖一段带路径的文字进来，程序会把路径抠出来
-4. 拖网页链接进来，会作为「网址」列出，并自动去 下载/桌面 里找同名文件
+================================================================
+How to use / 怎么用
+================================================================
 
-常用操作
-· 选中一行 → 点「复制选中路径」，或 Ctrl+C
-· 双击某行 → 用默认程序打开该文件
-· 右下勾选「复制后收起」→ 复制完窗口自动最小化，按 Esc 也能收起
-· 收起后再双击一次桌面图标，会把已打开的窗口唤到最前面
-· 点列头可排序；右键有「复制 SHA256」「打开所在位置」等
+1. Double-click PathDrop.exe (portable, no installer, no registry writes)
+   双击 PathDrop.exe 打开（免安装，不写注册表）
 
-────────────────────────────────
-说明
-────────────────────────────────
-· 视频时长需要本机装了 ffprobe（ffmpeg 附带），没有则只显示大小等基础信息
-· 设置（窗口大小、置顶、复制后收起）保存在 %APPDATA%\PathDrop\setting.json
-· 首次运行 Windows 可能提示"未知发布者"，因为程序没有代码签名，选择"仍要运行"即可
-· 源码与问题反馈：见项目主页
+2. Drag files / folders from your file manager into the window — the full
+   paths are listed immediately
+   从资源管理器把文件/文件夹拖进窗口 —— 立刻列出完整路径
+
+3. You can also drag a text snippet that contains a path (from a chat window,
+   Notepad, Word...). PathDrop pulls the path out of it.
+   也可以从聊天窗口、记事本里拖一段带路径的文字进来，程序会把路径抠出来
+
+4. Drag a web link in — it is listed as a "Link" entry, and PathDrop looks for
+   a file with the same name in Downloads / Desktop
+   拖网页链接进来，会作为「网址」列出，并自动去 下载/桌面 里找同名文件
+
+----------------------------------------------------------------
+Common actions / 常用操作
+----------------------------------------------------------------
+
+· Select a row → click "Copy selected", or press Ctrl+C
+  选中一行 → 点「复制选中路径」，或 Ctrl+C
+
+· Double-click a row → open that file with the default app
+  双击某行 → 用默认程序打开该文件
+
+· Tick "Hide after copy" (bottom right) → the window minimizes after copying;
+  Esc also hides it
+  右下勾选「复制后收起」→ 复制完窗口自动最小化，按 Esc 也能收起
+
+· After hiding, double-click the desktop icon again — the existing window is
+  brought to the front instead of opening a second one
+  收起后再双击一次桌面图标，会把已打开的窗口唤到最前面
+
+· Click a column header to sort; the right-click menu has "Copy SHA256",
+  "Reveal in Explorer" and more
+  点列头可排序；右键有「复制 SHA256」「打开所在位置」等
+
+================================================================
+Notes / 说明
+================================================================
+
+· Video duration requires ffprobe (bundled with ffmpeg) on your machine;
+  without it only basic info such as size is shown
+  视频时长需要本机装了 ffprobe（ffmpeg 附带），没有则只显示大小等基础信息
+
+· Settings (window size, always-on-top, hide after copy) are stored in
+  %APPDATA%\PathDrop\setting.json
+  设置（窗口大小、置顶、复制后收起）保存在 %APPDATA%\PathDrop\setting.json
+
+· On first run Windows may warn about an "unknown publisher" — the binary is
+  not code-signed. Choose "More info" → "Run anyway".
+  首次运行 Windows 可能提示"未知发布者"，因为程序没有代码签名，选择"仍要运行"即可
+
+· Source code and issue tracker: see the project page
+  源码与问题反馈：见项目主页

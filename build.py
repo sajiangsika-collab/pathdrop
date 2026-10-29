@@ -49,8 +49,8 @@ def win_version_file():
   ffi=FixedFileInfo(filevers=({VER.replace('.', ',')},0,0), prodvers=({VER.replace('.', ',')},0,0),
                     mask=0x3f, flags=0x0, OS=0x40004, fileType=0x1, subtype=0x0, date=(0, 0)),
   kids=[StringFileInfo([StringTable('080404b0', [
-        StringStruct('CompanyName', 'sajiangska-collab'),
-        StringStruct('FileDescription', '路径抓取器 PathDrop — 拖入即显示完整路径'),
+        StringStruct('CompanyName', 'sajiangsika-collab'),
+        StringStruct('FileDescription', 'PathDrop — drag anything in, get the full path'),
         StringStruct('FileVersion', '{VER}'),
         StringStruct('InternalName', 'PathDrop'),
         StringStruct('OriginalFilename', 'PathDrop.exe'),
