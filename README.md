@@ -41,6 +41,8 @@ Grab the package for your OS from [Releases](https://github.com/sajiangsika-coll
 | Linux (x64) | `PathDrop-1.4.1-linux-x64.tar.gz` | `chmod +x PathDrop && ./PathDrop`; needs X11 |
 
 > All three packages are built natively on each OS by GitHub Actions — see [build.yml](.github/workflows/build.yml).
+> The macOS package is built on Apple runners, which are slower to be allocated; if it is not in the
+> Release yet, you can build it yourself on a Mac with `python build.py --package`.
 > The binaries are not code-signed, so Windows SmartScreen / macOS Gatekeeper may warn about an
 > "unknown developer". That is expected.
 
@@ -181,6 +183,8 @@ docs/           screenshots and icons
 | Linux (x64) | `PathDrop-1.4.1-linux-x64.tar.gz` | 解压后 `chmod +x PathDrop && ./PathDrop`，需要系统有 X11 |
 
 > 三个平台的包由 GitHub Actions 在各自系统上原生构建，见 [build.yml](.github/workflows/build.yml)。
+> macOS 包由 CI 在苹果机器上构建，机器分配较慢；若 Release 里暂时还没有，可在自己的 Mac 上执行
+> `python build.py --package` 自行打包。
 > 没有代码签名，Windows SmartScreen / macOS Gatekeeper 可能提示「未知开发者」，属于正常现象。
 
 ## 使用
