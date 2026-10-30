@@ -24,7 +24,7 @@ jobs:
           - os: windows-latest
             label: Windows x64
           - os: macos-latest
-            label: macOS
+            label: macOS x86_64
           - os: ubuntu-22.04
             label: Linux x64
 
