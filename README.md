@@ -36,9 +36,9 @@ Grab the package for your OS from [Releases](https://github.com/sajiangsika-coll
 
 | Platform | File | Notes |
 | --- | --- | --- |
-| Windows 10/11 (x64) | `PathDrop-1.4.1-windows-x64.zip` | Unzip and run `PathDrop.exe`, no installer |
-| macOS (Intel / Apple Silicon) | `PathDrop-1.4.1-macos.zip` | Unzip to get `PathDrop.app`; unsigned, so right-click → Open the first time |
-| Linux (x64) | `PathDrop-1.4.1-linux-x64.tar.gz` | `chmod +x PathDrop && ./PathDrop`; needs X11 |
+| Windows 10/11 (x64) | `PathDrop-1.4.2-windows-x64.zip` | Unzip and run `PathDrop.exe`, no installer |
+| macOS (Intel / Apple Silicon) | `PathDrop-1.4.2-macos.zip` | Unzip to get `PathDrop.app`; unsigned, so right-click → Open the first time |
+| Linux (x64) | `PathDrop-1.4.2-linux-x64.tar.gz` | `chmod +x PathDrop && ./PathDrop`; needs X11 |
 
 > All three packages are built natively on each OS by GitHub Actions — see [build.yml](.github/workflows/build.yml).
 > The macOS package is built on Apple runners, which are slower to be allocated; if it is not in the
@@ -133,6 +133,7 @@ docs/           screenshots and icons
 
 ## Changelog
 
+- **1.4.2** macOS package now ships: CI builds on the Intel runner (`macos-15-intel`), since the arm64 pool kept failing to hand out machines
 - **1.4.1** Bilingual interface (English / 中文) with a top-right switcher; the selected row is kept when switching
 - **1.4** Cross-platform (macOS / Linux build and run); fonts and icons picked per OS
 - **1.3** Web links supported as *Link* entries, with local same-name file lookup
@@ -178,9 +179,9 @@ docs/           screenshots and icons
 
 | 系统 | 文件 | 说明 |
 | --- | --- | --- |
-| Windows 10/11 (x64) | `PathDrop-1.4.1-windows-x64.zip` | 解压后双击 `PathDrop.exe`，免安装 |
-| macOS (Intel / Apple Silicon) | `PathDrop-1.4.1-macos.zip` | 解压得到 `PathDrop.app`；未签名，首次需右键 →「打开」 |
-| Linux (x64) | `PathDrop-1.4.1-linux-x64.tar.gz` | 解压后 `chmod +x PathDrop && ./PathDrop`，需要系统有 X11 |
+| Windows 10/11 (x64) | `PathDrop-1.4.2-windows-x64.zip` | 解压后双击 `PathDrop.exe`，免安装 |
+| macOS (Intel / Apple Silicon) | `PathDrop-1.4.2-macos.zip` | 解压得到 `PathDrop.app`；未签名，首次需右键 →「打开」 |
+| Linux (x64) | `PathDrop-1.4.2-linux-x64.tar.gz` | 解压后 `chmod +x PathDrop && ./PathDrop`，需要系统有 X11 |
 
 > 三个平台的包由 GitHub Actions 在各自系统上原生构建，见 [build.yml](.github/workflows/build.yml)。
 > macOS 包由 CI 在苹果机器上构建，机器分配较慢；若 Release 里暂时还没有，可在自己的 Mac 上执行
@@ -272,6 +273,7 @@ docs/           截图与图标
 
 ## 更新日志
 
+- **1.4.2** 正式提供 macOS 安装包：CI 改用 Intel 机器（`macos-15-intel`），此前 arm64 资源池长期分配不到机器
 - **1.4.1** 界面支持中英双语切换（右上角下拉框），切换时保留选中行
 - **1.4** 跨平台适配（macOS / Linux 可运行、可打包）；字体与图标按系统自动选择
 - **1.3** 支持拖入网页链接，作为「网址」条目并查找本地同名文件

@@ -1,5 +1,5 @@
 Name:    PathDrop
-Version: 1.4.1
+Version: 1.4.2
 Summary: Drag files, text containing a path, or web links into the window —
          see the full path instantly and copy it in one click.
 

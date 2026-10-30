@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-PathDrop / 路径抓取器  v1.4.1
+PathDrop / 路径抓取器  v1.4.2
 
 把电脑上的任何东西（文件 / 视频 / 图片 / 文件夹 / 程序 / 文字里的路径 / 网页链接）
 拖进窗口，立刻显示它的完整路径，支持一键复制。
@@ -8,6 +8,7 @@ PathDrop / 路径抓取器  v1.4.1
 界面支持中英双语，右上角下拉框即时切换（英文为默认的对外语言，中文系统首次启动
 自动使用中文；选择会记进设置文件）。
 
+v1.4.2 新增：正式提供 macOS 安装包（CI 改用 Intel 机器构建）
 v1.4.1 新增：界面双语切换（English / 中文）
 v1.4   新增：跨平台（macOS / Linux 可运行、可打包），字体与图标按系统自动选择
 v1.3   新增：拖入网页链接，作为「网址」条目并查找本地同名文件
@@ -41,7 +42,7 @@ from tkinter import ttk, filedialog, messagebox
 from tkinterdnd2 import TkinterDnD, DND_FILES, DND_TEXT
 
 APP_NAME = "PathDrop"
-APP_VER = "1.4.1"
+APP_VER = "1.4.2"
 PORT = 51943
 
 IS_WIN = os.name == "nt"
