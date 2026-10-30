@@ -13,6 +13,8 @@ jobs:
   build:
     name: ${{ matrix.label }}
     runs-on: ${{ matrix.os }}
+    # macOS runner 排队可能很久，给足时间但别无限挂着
+    timeout-minutes: 60
     env:
       # Windows runner 默认 cp1252，不加这个中文日志会抛 UnicodeEncodeError
       PYTHONUTF8: "1"
@@ -23,7 +25,10 @@ jobs:
         include:
           - os: windows-latest
             label: Windows x64
-          - os: macos-latest
+          # 用 Intel 机器：GitHub 官方提示 macOS arm64 池子容量紧张（排队很久甚至抢不到），
+          # 而 x86_64 产物在 Apple Silicon 上可经 Rosetta 2 运行，兼容面反而更广。
+          # 注意 macos-13 已退役，Intel 标签现在只剩 macos-15-intel / macos-26-intel
+          - os: macos-15-intel
             label: macOS x86_64
           - os: ubuntu-22.04
             label: Linux x64
